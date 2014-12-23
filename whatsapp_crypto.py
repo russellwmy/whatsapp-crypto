@@ -19,7 +19,7 @@ def aes_decrypt(enc, key, iv):
     result = cipher.decrypt(enc)
     return result
 
-def export_to_sql(key_file_path, data_file_path):
+def crypt8_to_sql(key_file_path, data_file_path):
     key_data = None
     with open(key_file_path, 'rb') as key_file:
         key_data = key_file.read()
@@ -51,6 +51,6 @@ def export_to_sql(key_file_path, data_file_path):
 if __name__ == "__main__":
     key_file = sys.argv[1]
     data_file = sys.argv[2]
-    export_to_sql(key_file, data_file)
+    crypt8_to_sql(key_file, data_file)
 
 
