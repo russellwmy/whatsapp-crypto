@@ -6,6 +6,10 @@ import tempfile
 from io import BytesIO
 import gzip
 import os
+import sqlite3
+import csv
+import time
+import datetime
 
 OUTPUT_PATH = 'output/'
 
@@ -21,6 +25,8 @@ def aes_decrypt(enc, key, iv):
 
 def crypt8_to_sql(key_file_path, data_file_path):
     key_data = None
+    db = OUTPUT_PATH+'msgstore.db'
+    csv_name = OUTPUT_PATH+'result.csv'
     with open(key_file_path, 'rb') as key_file:
         key_data = key_file.read()
     key, iv = extract_key_iv(key_data)
@@ -45,10 +51,23 @@ def crypt8_to_sql(key_file_path, data_file_path):
         tmp = gzip.GzipFile(fileobj=buf)
         data = tmp.read()
 
-        with open(OUTPUT_PATH+'msgstore.db', 'wb') as output_file:
+        with open(db, 'wb') as output_file:
             output_file.write(data)
+        conn = sqlite3.connect(db)
+        c = conn.cursor()
+        c.execute("SELECT key_remote_jid, received_timestamp, data FROM messages")
+        with open(csv_name, 'w') as csvfile:
+            csvwriter = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            csvwriter.writerow(['Phone Number', 'Received Time', 'Message'])
+            for row in c.fetchall():
+                tmp = list(row)
+                timestamp = tmp [1]
+                tmp[1] = datetime.datetime.fromtimestamp(timestamp / 1000.0)
+                csvwriter.writerow(tmp)
     os.remove(tmp_file)
 if __name__ == "__main__":
+    if not os.path.exists(OUTPUT_PATH):
+        os.makedirs(OUTPUT_PATH)
     key_file = sys.argv[1]
     data_file = sys.argv[2]
     crypt8_to_sql(key_file, data_file)
